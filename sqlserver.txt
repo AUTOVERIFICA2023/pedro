@@ -1,0 +1,48 @@
+-- 1. Creación de Tablas
+
+CREATE TABLE empleados (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    nombre NVARCHAR(100),
+    salario DECIMAL(10, 2)
+);
+
+CREATE TABLE auditoria_empleados (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    empleado_id INT,
+    cambio NVARCHAR(255),
+    fecha DATETIME DEFAULT GETDATE()
+);
+
+-- 2. Creación de la Función del Trigger
+
+CREATE OR ALTER FUNCTION registrar_cambio()
+RETURNS TRIGGER
+AS
+BEGIN
+    INSERT INTO auditoria_empleados (empleado_id, cambio)
+    VALUES (INSERTED.id, 'Se actualizó el salario a ' + CAST(INSERTED.salario AS NVARCHAR));
+    RETURN INSERTED;
+END;
+GO
+
+-- 3. Creación del Trigger
+
+CREATE OR ALTER TRIGGER trigger_auditoria
+ON empleados
+AFTER UPDATE
+AS
+BEGIN
+    EXEC registrar_cambio();
+END;
+GO
+
+-- 4. Ejercicios Prácticos
+
+-- Insertar Datos
+INSERT INTO empleados (nombre, salario) VALUES ('Juan Pérez', 50000);
+
+-- Actualizar Datos
+UPDATE empleados SET salario = 55000 WHERE nombre = 'Juan Pérez';
+
+-- Consultar la Tabla de Auditoría
+SELECT * FROM auditoria_empleados;
